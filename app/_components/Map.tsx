@@ -1,15 +1,18 @@
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet/dist/leaflet";
+import "leaflet/dist/leaflet.css";
 import { useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import useGetUserLocation from "../_hooks/useGetUserLocation";
 import { useLocationStore } from "../stores/useLocationStore";
 import { BottomSheet } from "./BottomSheet";
+import { LoadingIndicator } from "./LoadingIndicator";
 import { MapMarker, TLocation } from "./MapMarker";
 import { Sidebar } from "./Sidebar";
+
 export default function Map() {
-	const { setActiveLocation } = useLocationStore();
+	const { isAddingLocation, setActiveLocation } = useLocationStore();
 	const [locations, setLocations] = useState<TLocation[]>([]);
 	const { position: userLocation } = useGetUserLocation();
 
@@ -28,6 +31,8 @@ export default function Map() {
 	return (
 		<div className="relative h-dvh w-full">
 			{/* Bottom sheet */}
+			{isAddingLocation && <LoadingIndicator />}
+
 			<Sidebar
 				handleLocationHover={handleLocationHover}
 				handlePinDeletion={handlePinDeletion}

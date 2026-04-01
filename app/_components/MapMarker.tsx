@@ -24,23 +24,30 @@ export type TMapMarkerProps = {
 const handleMapClick = async (
 	e: LeafletMouseEvent,
 	setLocations: Dispatch<SetStateAction<TLocation[]>>,
+	setAddingLocation: (value: boolean) => void,
 ) => {
-	const { lat, lng } = e.latlng;
+	try {
+		const { lat, lng } = e.latlng;
 
-	const displayName = await reverseGeocode(lat, lng);
+		setAddingLocation(true);
 
-	setLocations((prev) => [
-		...prev,
-		{
-			name:
-				displayName.name.length > 0
-					? displayName.name
-					: displayName.display_name,
-			coordinates: [lat, lng],
-		},
-	]);
+		const displayName = await reverseGeocode(lat, lng);
 
-	return displayName;
+		setLocations((prev) => [
+			...prev,
+			{
+				name:
+					displayName.name.length > 0
+						? displayName.name
+						: displayName.display_name,
+				coordinates: [lat, lng],
+			},
+		]);
+
+		return displayName;
+	} finally {
+		setAddingLocation(false);
+	}
 };
 
 export const LocationMarker = ({
@@ -97,23 +104,23 @@ export const LocationMarker = ({
 	}, [activeLocation]);
 
 	return (
-		<div className="transition-transform" key={index}>
+		<div className="transition-all" key={index}>
 			<Marker
 				ref={locationMarkerRef}
 				position={location.coordinates}
 				icon={markerIcon}
 			>
-				<Popup>{location.name}</Popup>
+				<Popup className="rounded-md">{location.name}</Popup>
 			</Marker>
 		</div>
 	);
 };
 
 export const MapMarker = ({ locations, setLocations }: TMapMarkerProps) => {
-	const { setActiveLocation } = useLocationStore();
+	const { setActiveLocation, setAddingLocation } = useLocationStore();
 	useMapEvents({
 		click(e) {
-			void handleMapClick(e, setLocations);
+			void handleMapClick(e, setLocations, setAddingLocation);
 		},
 		dragstart() {
 			setActiveLocation(-1);
