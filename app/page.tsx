@@ -5,7 +5,7 @@ import { useMemo } from "react";
 export default function Home() {
 	const Map = useMemo(
 		() =>
-			dynamic(() => import("./map"), {
+			dynamic(() => import("./_components/Map"), {
 				loading: () => <p>A map is loading</p>,
 				ssr: false,
 			}),
