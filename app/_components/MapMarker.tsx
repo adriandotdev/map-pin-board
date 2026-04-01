@@ -1,29 +1,21 @@
 import L, { LeafletMouseEvent } from "leaflet";
-import { Dispatch, SetStateAction, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useRef } from "react";
 import { Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import { reverseGeocode } from "../_utils/reverseGeocode";
-import { useLocationStore } from "../stores/useLocationStore";
+import { TLocation, useLocationStore } from "../stores/useLocationStore";
 
 const markerIcon = new L.Icon({
 	iconUrl: "/MapPin.svg",
 	iconSize: [45, 45],
 	iconAnchor: [16, 32],
 	popupAnchor: [0, -32],
+	className: "marker-class",
 });
-
-export type TLocation = {
-	name: string;
-	coordinates: [number, number];
-};
-
-export type TMapMarkerProps = {
-	locations: TLocation[];
-	setLocations: Dispatch<SetStateAction<TLocation[]>>;
-};
 
 const handleMapClick = async (
 	e: LeafletMouseEvent,
-	setLocations: Dispatch<SetStateAction<TLocation[]>>,
+	addLocation: (location: TLocation) => void,
 	setAddingLocation: (value: boolean) => void,
 ) => {
 	try {
@@ -33,16 +25,13 @@ const handleMapClick = async (
 
 		const displayName = await reverseGeocode(lat, lng);
 
-		setLocations((prev) => [
-			...prev,
-			{
-				name:
-					displayName.name.length > 0
-						? displayName.name
-						: displayName.display_name,
-				coordinates: [lat, lng],
-			},
-		]);
+		addLocation({
+			name:
+				displayName.name.length > 0
+					? displayName.name
+					: displayName.display_name,
+			coordinates: [lat, lng],
+		});
 
 		return displayName;
 	} finally {
@@ -104,7 +93,12 @@ export const LocationMarker = ({
 	}, [activeLocation]);
 
 	return (
-		<div className="transition-all" key={index}>
+		<motion.div
+			initial={{ opacity: 0, scale: 0 }}
+			animate={{ opacity: 1, scale: 1 }}
+			exit={{ opacity: 0, scale: 0 }}
+			transition={{ duration: 0.3 }}
+		>
 			<Marker
 				ref={locationMarkerRef}
 				position={location.coordinates}
@@ -112,15 +106,16 @@ export const LocationMarker = ({
 			>
 				<Popup className="rounded-md">{location.name}</Popup>
 			</Marker>
-		</div>
+		</motion.div>
 	);
 };
 
-export const MapMarker = ({ locations, setLocations }: TMapMarkerProps) => {
-	const { setActiveLocation, setAddingLocation } = useLocationStore();
+export const MapMarker = () => {
+	const { locations, addLocation, setActiveLocation, setAddingLocation } =
+		useLocationStore();
 	useMapEvents({
 		click(e) {
-			void handleMapClick(e, setLocations, setAddingLocation);
+			void handleMapClick(e, addLocation, setAddingLocation);
 		},
 		dragstart() {
 			setActiveLocation(-1);
@@ -128,10 +123,10 @@ export const MapMarker = ({ locations, setLocations }: TMapMarkerProps) => {
 	});
 
 	return (
-		<>
+		<AnimatePresence>
 			{locations.map((location, index) => (
 				<LocationMarker key={index} location={location} index={index} />
 			))}
-		</>
+		</AnimatePresence>
 	);
 };

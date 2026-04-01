@@ -1,19 +1,11 @@
 import { MapPin, Trash2 } from "lucide-react";
-import { animate, motion, useMotionValue } from "motion/react";
+import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
 import { useRef } from "react";
 import { useLocationStore } from "../stores/useLocationStore";
-import { TLocation } from "./MapMarker";
 
-export const BottomSheet = ({
-	locations,
-	handleLocationHover,
-	handlePinDeletion,
-}: {
-	locations: TLocation[];
-	handleLocationHover: (index: number) => void;
-	handlePinDeletion: (index: number) => void;
-}) => {
-	const { activeLocation } = useLocationStore();
+export const BottomSheet = () => {
+	const { activeLocation, locations, removeLocation, setActiveLocation } =
+		useLocationStore();
 
 	const HEADER_HEIGHT = 140;
 	const ROW_HEIGHT = 64;
@@ -62,7 +54,7 @@ export const BottomSheet = ({
 		<motion.div
 			id="bottom-sheet"
 			style={{ height: heightMV }}
-			className="xl:hidden fixed bottom-0 z-999 left-0 w-full bg-white rounded-t-2xl shadow-lg py-4 overflow-hidden"
+			className="xl:hidden fixed bottom-0 z-999 left-0 w-full bg-white rounded-t-2xl shadow-lg py-4 overflow-hidden landscape:hidden"
 		>
 			<motion.div
 				className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab active:cursor-grabbing touch-none"
@@ -89,37 +81,43 @@ export const BottomSheet = ({
 			)}
 
 			<div className="overflow-y-auto max-h-60 xl:flex-1  min-h-full pb-10">
-				{locations.map((location, index) => (
-					<div
-						onClick={() => {
-							handleLocationHover(index);
-						}}
-						key={index}
-						className={`flex items-center gap-3 px-4 py-3 border-b border-gray-200 last:border-0 hover:bg-gray-50 hover:cursor-pointer ${index === activeLocation ? "bg-gray-50" : ""}`}
-					>
-						<div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600 text-xs font-bold shrink-0">
-							#{index + 1}
-						</div>
-						<div className="flex-1 min-w-0 flex flex-col gap-1">
-							<p className="text-sm font-semibold text-gray-800 max-w-[150ch] text-ellipsis">
-								{location.name}
-							</p>
-							<div className="flex gap-1 items-center">
-								<MapPin size={12} color="gray" />
-								<p className="text-xs text-gray-400 truncate">
-									{location.coordinates[0].toFixed(5)},{" "}
-									{location.coordinates[1].toFixed(5)}
-								</p>
-							</div>
-						</div>
-						<button
-							onClick={() => handlePinDeletion(index)}
-							className="p-2 rounded-full text-red-500 hover:bg-red-50 transition-colors shrink-0 border border-gray-300"
+				<AnimatePresence>
+					{locations.map((location, index) => (
+						<motion.div
+							initial={{ opacity: 0, x: -20 }}
+							animate={{ opacity: 1, x: 0 }}
+							exit={{ opacity: 0, x: 20 }}
+							transition={{ duration: 0.25 }}
+							onClick={() => {
+								setActiveLocation(index);
+							}}
+							key={location.coordinates.join("-")}
+							className={`flex items-center gap-3 px-4 py-3 border-b border-gray-200 last:border-0 hover:bg-gray-50 hover:cursor-pointer ${index === activeLocation ? "bg-gray-50" : ""}`}
 						>
-							<Trash2 size={16} />
-						</button>
-					</div>
-				))}
+							<div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600 text-xs font-bold shrink-0">
+								#{index + 1}
+							</div>
+							<div className="flex-1 min-w-0 flex flex-col gap-1">
+								<p className="text-sm font-semibold text-gray-800 max-w-[150ch] text-ellipsis">
+									{location.name}
+								</p>
+								<div className="flex gap-1 items-center">
+									<MapPin size={12} color="gray" />
+									<p className="text-xs text-gray-400 truncate">
+										{location.coordinates[0].toFixed(5)},{" "}
+										{location.coordinates[1].toFixed(5)}
+									</p>
+								</div>
+							</div>
+							<button
+								onClick={() => removeLocation(index)}
+								className="p-2 rounded-full text-red-500 hover:bg-red-50 transition-colors shrink-0 border border-gray-300"
+							>
+								<Trash2 size={16} />
+							</button>
+						</motion.div>
+					))}
+				</AnimatePresence>
 			</div>
 		</motion.div>
 	);

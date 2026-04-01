@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 export default function useGetUserLocation() {
 	const [position, setPosition] = useState<[number, number] | null>(null);
 
-	useEffect(() => {
+	const requestLocation = () => {
 		if (!navigator.geolocation) {
 			console.log("Geolocation not supported");
 			return;
@@ -17,7 +17,11 @@ export default function useGetUserLocation() {
 				console.log(err);
 			},
 		);
+	};
+
+	useEffect(() => {
+		requestLocation();
 	}, []);
 
-	return { position };
+	return { position, requestLocation };
 }
