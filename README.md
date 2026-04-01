@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Map Pinboard
+
+An interactive map application that lets you drop and manage named pins anywhere on the world map. Pins are reverse-geocoded automatically and persisted across sessions via `localStorage`.
+
+---
+
+## Features
+
+- **Click-to-pin** — click anywhere on the map to drop a pin; the location name is resolved automatically via the [Nominatim](https://nominatim.openstreetmap.org/) reverse-geocoding API
+- **Persistent pins** — all pins are saved to `localStorage` through Zustand's `persist` middleware and restored on the next visit
+- **Geolocation** — the map centres on your current position on first load
+- **Pin list sidebar** — desktop view shows a fixed sidebar listing all pins with coordinates; hovering a row flies the map to that pin
+- **Bottom sheet** — mobile/portrait view shows a draggable bottom sheet with snapping behaviour (default / half / full-screen)
+- **Delete pins** — remove any pin from either the sidebar or the bottom sheet
+- **Loading indicator** — shown while a reverse-geocode request is in-flight
+- **Smooth animations** — marker enter/exit transitions and map fly-to powered by Motion
+
+---
+
+## Tech Stack
+
+| Layer           | Library                                                                            |
+| --------------- | ---------------------------------------------------------------------------------- |
+| Framework       | [Next.js 16](https://nextjs.org/) (App Router, SSR disabled for map)               |
+| Language        | TypeScript 5                                                                       |
+| Map             | [Leaflet](https://leafletjs.com/) + [React Leaflet](https://react-leaflet.js.org/) |
+| State           | [Zustand 5](https://github.com/pmndrs/zustand) with `persist` middleware           |
+| Animations      | [Motion (formerly Framer Motion)](https://motion.dev/)                             |
+| Styling         | [Tailwind CSS v4](https://tailwindcss.com/)                                        |
+| Icons           | [Lucide React](https://lucide.dev/)                                                |
+| Package manager | [pnpm](https://pnpm.io/)                                                           |
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js ≥ 18
+- pnpm (`npm i -g pnpm`)
+
+### Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Run the development server
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) in your browser. Allow location access when prompted.
 
-## Learn More
+### Build for production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm build
+pnpm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+app/
+├── page.tsx                  # Entry point — dynamically imports Map (SSR disabled)
+├── layout.tsx                # Root layout
+├── globals.css               # Global styles
+├── _components/
+│   ├── Map.tsx               # Top-level map shell
+│   ├── MapMarker.tsx         # Click handler + individual marker rendering
+│   ├── Sidebar.tsx           # Desktop pin list (xl breakpoint)
+│   ├── BottomSheet.tsx       # Mobile draggable bottom sheet
+│   ├── Header.tsx            # App header bar
+│   └── LoadingIndicator.tsx  # Shown during reverse-geocode requests
+├── _hooks/
+│   └── useGetUserLocation.tsx  # Wraps the Geolocation API
+├── _utils/
+│   └/reverseGeocode.ts       # Nominatim reverse-geocode fetch
+└── stores/
+    └── useLocationStore.ts   # Zustand store (locations, active pin, loading state)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## How It Works
+
+1. On load, `useGetUserLocation` requests the browser's geolocation and centres the map.
+2. `useLocationStore` rehydrates saved pins from `localStorage` via the Zustand `persist` middleware (`"map-pinboard-locations"` key).
+3. Clicking the map calls `reverseGeocode` (Nominatim) to resolve a human-readable name, then dispatches `addLocation` to the store.
+4. Both `Sidebar` and `BottomSheet` read `locations` directly from the store — no prop drilling.
+5. Selecting a pin in the list calls `setActiveLocation`, which triggers a `flyTo` animation on the corresponding `LocationMarker`.
+6. Deleting a pin calls `removeLocation`; the store update is automatically flushed to `localStorage`.

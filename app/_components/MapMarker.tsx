@@ -43,13 +43,14 @@ const handleMarkerDragEnd = async (
 	e: L.DragEndEvent,
 	index: number,
 	updateLocation: (index: number, location: Partial<TLocation>) => void,
+	setActiveLocation: (location: number) => void,
 ) => {
 	const marker = e.target;
 	const newPos = marker.getLatLng();
 
-	// reverse geocode to get new name
 	const displayName = await reverseGeocode(newPos.lat, newPos.lng);
 
+	setActiveLocation(-1);
 	updateLocation(index, {
 		coordinates: [newPos.lat, newPos.lng],
 		name:
@@ -64,7 +65,8 @@ export const LocationMarker = ({
 	location: TLocation;
 	index: number;
 }) => {
-	const { activeLocation, updateLocation } = useLocationStore();
+	const { activeLocation, updateLocation, setActiveLocation } =
+		useLocationStore();
 	const locationMarkerRef = useRef<L.Marker>(null);
 	const map = useMap();
 
@@ -123,7 +125,8 @@ export const LocationMarker = ({
 				icon={markerIcon}
 				draggable
 				eventHandlers={{
-					dragend: (e) => handleMarkerDragEnd(e, index, updateLocation),
+					dragend: (e) =>
+						handleMarkerDragEnd(e, index, updateLocation, setActiveLocation),
 				}}
 			>
 				<Popup className="rounded-md">{location.name}</Popup>
