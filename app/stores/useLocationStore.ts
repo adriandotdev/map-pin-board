@@ -15,6 +15,7 @@ type LocationStore = {
 	locations: TLocation[];
 	addLocation: (location: TLocation) => void;
 	removeLocation: (index: number) => void;
+	updateLocation: (index: number, location: Partial<TLocation>) => void;
 };
 
 export const useLocationStore = create<LocationStore>()(
@@ -35,6 +36,13 @@ export const useLocationStore = create<LocationStore>()(
 			removeLocation: (index: number) => {
 				set((state) => ({
 					locations: state.locations.filter((_, i) => i !== index),
+				}));
+			},
+			updateLocation: (index: number, location: Partial<TLocation>) => {
+				set((state) => ({
+					locations: state.locations.map((loc, i) =>
+						i === index ? { ...loc, ...location } : loc,
+					),
 				}));
 			},
 		}),

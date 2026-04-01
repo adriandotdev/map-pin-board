@@ -29,11 +29,12 @@ export const Sidebar = () => {
 				<AnimatePresence>
 					{locations.map((location, index) => (
 						<motion.div
+							tabIndex={0}
 							initial={{ opacity: 0, x: -20 }}
 							animate={{ opacity: 1, x: 0 }}
 							exit={{ opacity: 0, x: 20 }}
 							transition={{ duration: 0.25 }}
-							onClick={() => {
+							onFocus={() => {
 								setActiveLocation(index);
 							}}
 							onMouseOver={() => {

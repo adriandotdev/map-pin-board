@@ -39,6 +39,24 @@ const handleMapClick = async (
 	}
 };
 
+const handleMarkerDragEnd = async (
+	e: L.DragEndEvent,
+	index: number,
+	updateLocation: (index: number, location: Partial<TLocation>) => void,
+) => {
+	const marker = e.target;
+	const newPos = marker.getLatLng();
+
+	// reverse geocode to get new name
+	const displayName = await reverseGeocode(newPos.lat, newPos.lng);
+
+	updateLocation(index, {
+		coordinates: [newPos.lat, newPos.lng],
+		name:
+			displayName.name.length > 0 ? displayName.name : displayName.display_name,
+	});
+};
+
 export const LocationMarker = ({
 	location,
 	index,
@@ -46,7 +64,7 @@ export const LocationMarker = ({
 	location: TLocation;
 	index: number;
 }) => {
-	const { activeLocation } = useLocationStore();
+	const { activeLocation, updateLocation } = useLocationStore();
 	const locationMarkerRef = useRef<L.Marker>(null);
 	const map = useMap();
 
@@ -103,6 +121,10 @@ export const LocationMarker = ({
 				ref={locationMarkerRef}
 				position={location.coordinates}
 				icon={markerIcon}
+				draggable
+				eventHandlers={{
+					dragend: (e) => handleMarkerDragEnd(e, index, updateLocation),
+				}}
 			>
 				<Popup className="rounded-md">{location.name}</Popup>
 			</Marker>
