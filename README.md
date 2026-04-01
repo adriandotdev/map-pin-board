@@ -2,6 +2,8 @@
 
 An interactive map application that lets you drop and manage named pins anywhere on the world map. Pins are reverse-geocoded automatically and persisted across sessions via `localStorage`.
 
+[Live Demo](https://map-pin-board.vercel.app/)
+
 ---
 
 ## Features

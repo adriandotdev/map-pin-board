@@ -13,11 +13,8 @@ const markerIcon = new L.Icon({
 	className: "marker-class",
 });
 
-const handleMapClick = async (
-	e: LeafletMouseEvent,
-	addLocation: (location: TLocation) => void,
-	setAddingLocation: (value: boolean) => void,
-) => {
+const handleMapClick = async (e: LeafletMouseEvent) => {
+	const { addLocation, setAddingLocation } = useLocationStore.getState();
 	try {
 		const { lat, lng } = e.latlng;
 
@@ -39,23 +36,30 @@ const handleMapClick = async (
 	}
 };
 
-const handleMarkerDragEnd = async (
-	e: L.DragEndEvent,
-	index: number,
-	updateLocation: (index: number, location: Partial<TLocation>) => void,
-	setActiveLocation: (location: number) => void,
-) => {
-	const marker = e.target;
-	const newPos = marker.getLatLng();
+const handleMarkerDragEnd = async (e: L.DragEndEvent, index: number) => {
+	const { updateLocation, setActiveLocation, setAddingLocation } =
+		useLocationStore.getState();
 
-	const displayName = await reverseGeocode(newPos.lat, newPos.lng);
+	try {
+		const marker = e.target;
+		const newPos = marker.getLatLng();
 
-	setActiveLocation(-1);
-	updateLocation(index, {
-		coordinates: [newPos.lat, newPos.lng],
-		name:
-			displayName.name.length > 0 ? displayName.name : displayName.display_name,
-	});
+		setAddingLocation(true);
+
+		const displayName = await reverseGeocode(newPos.lat, newPos.lng);
+
+		setActiveLocation(-1);
+
+		updateLocation(index, {
+			coordinates: [newPos.lat, newPos.lng],
+			name:
+				displayName.name.length > 0
+					? displayName.name
+					: displayName.display_name,
+		});
+	} finally {
+		setAddingLocation(false);
+	}
 };
 
 export const LocationMarker = ({
@@ -65,8 +69,7 @@ export const LocationMarker = ({
 	location: TLocation;
 	index: number;
 }) => {
-	const { activeLocation, updateLocation, setActiveLocation } =
-		useLocationStore();
+	const { activeLocation } = useLocationStore();
 	const locationMarkerRef = useRef<L.Marker>(null);
 	const map = useMap();
 
@@ -125,8 +128,7 @@ export const LocationMarker = ({
 				icon={markerIcon}
 				draggable
 				eventHandlers={{
-					dragend: (e) =>
-						handleMarkerDragEnd(e, index, updateLocation, setActiveLocation),
+					dragend: (e) => handleMarkerDragEnd(e, index),
 				}}
 			>
 				<Popup className="rounded-md">{location.name}</Popup>
@@ -136,11 +138,10 @@ export const LocationMarker = ({
 };
 
 export const MapMarker = () => {
-	const { locations, addLocation, setActiveLocation, setAddingLocation } =
-		useLocationStore();
+	const { locations, setActiveLocation } = useLocationStore();
 	useMapEvents({
 		click(e) {
-			void handleMapClick(e, addLocation, setAddingLocation);
+			void handleMapClick(e);
 		},
 		dragstart() {
 			setActiveLocation(-1);
