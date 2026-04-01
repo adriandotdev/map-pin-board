@@ -88,7 +88,7 @@ export const BottomSheet = ({
 				</div>
 			)}
 
-			<div className="overflow-y-auto max-h-60 xl:flex-1 xl:max-h-none xl:min-h-0">
+			<div className="overflow-y-auto max-h-60 xl:flex-1  min-h-full pb-10">
 				{locations.map((location, index) => (
 					<div
 						onClick={() => {
